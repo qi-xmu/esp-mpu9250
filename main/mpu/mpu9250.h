@@ -9,16 +9,19 @@
 uint8_t mpu9250_init();
 
 uint8_t MPU_Write_Byte(mpu_reg reg, uint8_t data);
-uint8_t MPU_Write_Len(uint8_t saddr, mpu_reg reg, uint8_t *data, uint8_t len);
+uint8_t MPU_Write_Len(uint8_t saddr, mpu_reg reg, uint8_t len, uint8_t *data);
 
 uint8_t MPU_Read_Byte(mpu_reg reg, uint8_t *res);
-uint8_t MPU_Read_Len(uint8_t saddr, mpu_reg reg, uint8_t *buf, uint8_t len);
+uint8_t MPU_Read_Len(uint8_t saddr, mpu_reg reg, uint8_t len, uint8_t *buf);
 
 uint8_t MPU_Set_Gyro_FSR(uint8_t fsr);
 uint8_t MPU_Set_Accel_FSR(uint8_t fsr);
 uint8_t MPU_Set_Rate(uint16_t rate);
 
 int16_t MPU_Get_Temp();
+
+uint8_t MPU_Get_Gyroscope(int16_t *gx, int16_t *gy, int16_t *gz);
+uint8_t MPU_Get_Accelerometer(int16_t *ax, int16_t *ay, int16_t *az);
 
 /* 其他 */
 

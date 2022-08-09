@@ -20,7 +20,9 @@
     "stdio.h": "c",
     "i2c.h": "c",
     "esp_timer.h": "c",
-    "time.h": "c"
+    "time.h": "c",
+    "inv_mpu.h": "c",
+    "inv_mpu_dmp_motion_driver.h": "c"
   },
   "idf.flashType": "UART",
   "idf.port": "/dev/ttyACM0",

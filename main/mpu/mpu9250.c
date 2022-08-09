@@ -1,9 +1,9 @@
 #include "mpu9250.h"
 
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
-#include "esp_log.h"
 
 static const char *TAG = "MPU9250";
 
@@ -84,30 +84,29 @@ uint8_t MPU_Write_Byte(mpu_reg reg, uint8_t data) {
  *     - 0 is Success
  *     - 1 is Error
  */
-uint8_t MPU_Write_Len(uint8_t saddr, mpu_reg reg, uint8_t *data, uint8_t len)
-{
-	esp_err_t error;
-	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-	i2c_master_start(cmd);
-	error = i2c_master_write_byte(cmd, (saddr << 1) | I2C_MASTER_WRITE, 1);
-	if(error != ESP_OK)
-		return 1;
+uint8_t MPU_Write_Len(uint8_t saddr, mpu_reg reg, uint8_t len, uint8_t *data) {
+    esp_err_t error;
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    error = i2c_master_write_byte(cmd, (saddr << 1) | I2C_MASTER_WRITE, 1);
+    if (error != ESP_OK)
+        return 1;
 
-	error = i2c_master_write_byte(cmd, reg, 1);
-	if(error != ESP_OK)
-		return 1;
+    error = i2c_master_write_byte(cmd, reg, 1);
+    if (error != ESP_OK)
+        return 1;
 
-	error = i2c_master_write(cmd, data, len, 1);
-	if(error != ESP_OK)
-		return 1;
+    error = i2c_master_write(cmd, data, len, 1);
+    if (error != ESP_OK)
+        return 1;
 
-	i2c_master_stop(cmd);
+    i2c_master_stop(cmd);
 
-	i2c_master_cmd_begin(I2C_NUM_0, cmd, 10/portTICK_PERIOD_MS);
+    i2c_master_cmd_begin(I2C_NUM_0, cmd, 10 / portTICK_PERIOD_MS);
 
-	i2c_cmd_link_delete(cmd);
+    i2c_cmd_link_delete(cmd);
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -150,7 +149,6 @@ uint8_t MPU_Read_Byte(mpu_reg reg, uint8_t *res) {
     return 0;
 }
 
-
 /**
  * @brief Read a buffer from MPU through I2C
  *        读取i2c缓冲
@@ -164,34 +162,33 @@ uint8_t MPU_Read_Byte(mpu_reg reg, uint8_t *res) {
  *     - 0 is Success
  *     - 1 is Error
  */
-uint8_t MPU_Read_Len(uint8_t saddr, mpu_reg reg, uint8_t *buf, uint8_t len)
-{
-	esp_err_t error;
-	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-	i2c_master_start(cmd);
-	error = i2c_master_write_byte(cmd, (saddr << 1) | I2C_MASTER_WRITE, 1);
-	if(error != ESP_OK)
-		return 1;
+uint8_t MPU_Read_Len(uint8_t saddr, mpu_reg reg, uint8_t len, uint8_t *buf) {
+    esp_err_t error;
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    error = i2c_master_write_byte(cmd, (saddr << 1) | I2C_MASTER_WRITE, 1);
+    if (error != ESP_OK)
+        return 1;
 
-	error = i2c_master_write_byte(cmd, reg, 1);
-	if(error != ESP_OK)
-		return 1;
+    error = i2c_master_write_byte(cmd, reg, 1);
+    if (error != ESP_OK)
+        return 1;
 
-	i2c_master_start(cmd);
-	error = i2c_master_write_byte(cmd, (saddr << 1) | I2C_MASTER_READ, 1);
-	if(error != ESP_OK)
-		return 1;
+    i2c_master_start(cmd);
+    error = i2c_master_write_byte(cmd, (saddr << 1) | I2C_MASTER_READ, 1);
+    if (error != ESP_OK)
+        return 1;
 
-	error = i2c_master_read(cmd, buf, len, I2C_MASTER_LAST_NACK);
-	if(error != ESP_OK)
-		return 1;
+    error = i2c_master_read(cmd, buf, len, I2C_MASTER_LAST_NACK);
+    if (error != ESP_OK)
+        return 1;
 
-	i2c_master_stop(cmd);
+    i2c_master_stop(cmd);
 
-	i2c_master_cmd_begin(I2C_NUM_0, cmd, 10/portTICK_PERIOD_MS);
+    i2c_master_cmd_begin(I2C_NUM_0, cmd, 10 / portTICK_PERIOD_MS);
 
-	i2c_cmd_link_delete(cmd);
-	return 0;
+    i2c_cmd_link_delete(cmd);
+    return 0;
 }
 
 /**
@@ -284,7 +281,7 @@ int16_t MPU_Get_Temp() {
     uint8_t buf[2];
     int16_t raw;
     float temp;
-    uint8_t res = MPU_Read_Len(MPU_ADDR, MPU9250_TEMP_OUT_H, buf, 2);
+    uint8_t res = MPU_Read_Len(MPU_ADDR, MPU9250_TEMP_OUT_H, 2, buf);
     if (res != 0)
         return 1;
     raw = ((uint16_t)(buf[0] << 8)) | buf[1];
@@ -293,10 +290,56 @@ int16_t MPU_Get_Temp() {
 }
 
 /**
+ * @brief Get the Gyroscope data of the MPU
+ *        获取角加速度
+ *
+ * @param gx parameter is the x axis data of Gyroscope
+ * @param gy parameter is the y axis data of Gyroscope
+ * @param gz parameter is the z axis data of Gyroscope
+ *
+ * @return
+ *     - 0 is Success
+ *     - 1 is Error
+ */
+uint8_t MPU_Get_Gyroscope(int16_t *gx, int16_t *gy, int16_t *gz) {
+    uint8_t buf[6], res;
+    res = MPU_Read_Len(MPU_ADDR, MPU9250_GYRO_XOUT_H, 6, buf);
+    if (res == 0) {
+        *gx = ((uint16_t)buf[0] << 8) | buf[1];
+        *gy = ((uint16_t)buf[2] << 8) | buf[3];
+        *gz = ((uint16_t)buf[4] << 8) | buf[5];
+    }
+    return res;
+}
+
+/**
+ * @brief Get the Accelerometer data of the MPU
+ *        获取加速度
+ *
+ * @param ax parameter is the x axis data of Accelerometer
+ * @param ay parameter is the y axis data of Accelerometer
+ * @param az parameter is the z axis data of Accelerometer
+ *
+ * @return
+ *     - 0 is Success
+ *     - 1 is Error
+ */
+uint8_t MPU_Get_Accelerometer(int16_t *ax, int16_t *ay, int16_t *az) {
+    uint8_t buf[6], res;
+    res = MPU_Read_Len(MPU_ADDR, MPU9250_ACCEL_XOUT_H, 6, buf);
+    if (res == 0) {
+        *ax = ((uint16_t)buf[0] << 8) | buf[1];
+        *ay = ((uint16_t)buf[2] << 8) | buf[3];
+        *az = ((uint16_t)buf[4] << 8) | buf[5];
+    }
+    return res;
+}
+
+/**
  * @brief delay some millionseconds
- * 
- * @param num_ms 
- * @return * void 
+ *
+ * @param num_ms
+ * @return * void
  */
 void _delay_ms(unsigned long num_ms) {
     vTaskDelay(num_ms / portTICK_PERIOD_MS);
@@ -304,10 +347,8 @@ void _delay_ms(unsigned long num_ms) {
 
 /**
  * @brief get system time
- * 
+ *
  * @param time parameter is return time in milliseconds.
  * @return * void
  */
-void _get_ms(unsigned long *time){
-    *time = esp_log_timestamp();
-} 
+void _get_ms(unsigned long *time) { *time = esp_log_timestamp(); }

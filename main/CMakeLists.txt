@@ -7,6 +7,6 @@
 
 # register_component()
 
-idf_component_register(SRC_DIRS "." "mpu"
+idf_component_register(SRC_DIRS "." "mpu" "dmp"
     INCLUDE_DIRS "."
 )

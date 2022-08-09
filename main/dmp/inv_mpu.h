@@ -131,4 +131,13 @@ int mpu_run_self_test(long *gyro, long *accel);
 int mpu_run_6500_self_test(long *gyro, long *accel, unsigned char debug);
 int mpu_register_tap_cb(void (*func)(unsigned char, unsigned char));
 
+
+/* custom functions */
+int mpu_dmp_init();
+unsigned short inv_orientation_matrix_to_scalar(const signed char *mtx);
+unsigned short inv_row_2_scale(const signed char *row);
+int run_self_test(void);
+
+int mpu_dmp_get_data(float *pitch, float *roll, float *yaw);
+
 #endif  /* #ifndef _INV_MPU_H_ */
