@@ -1,12 +1,12 @@
 # put here your custom config value
 menu "MPU9250 Configuration"
 config MPU9250_SCL
-    string "MPU9250 SCL Pin"
+    int "MPU9250 SCL Pin"
     default 5
     help
     MPU9250 SCL Pin, default value is 5
 config MPU9250_SDA
-    string "MPU9250 SDA Pin"
+    int "MPU9250 SDA Pin"
     default 4
     help
     MPU9250 SDA Pin, default value is 4

@@ -1,0 +1,31 @@
+{
+  "C_Cpp.intelliSenseEngine": "Tag Parser",
+  "files.associations": {
+    "dockerfile": "dockerfile",
+    "*.par": "tsv",
+    "*.simple": "yacc",
+    "*.y": "yacc",
+    "*.parv": "bat",
+    "*.vue": "vue",
+    "freertos.h": "c",
+    "gpio.h": "c",
+    "task.h": "c",
+    "i2c_init.h": "c",
+    "mpu9250.h": "c",
+    "esp_log.h": "c",
+    "mpu9250_map.h": "c",
+    "queue.h": "c",
+    "*.ipp": "c",
+    "*.inc": "c",
+    "stdio.h": "c",
+    "i2c.h": "c",
+    "esp_timer.h": "c",
+    "time.h": "c"
+  },
+  "idf.flashType": "UART",
+  "idf.port": "/dev/ttyACM0",
+  "idf.adapterTargetName": "esp32c3",
+  "idf.openOcdConfigs": [
+    "board/esp32c3-builtin.cfg"
+  ]
+}
