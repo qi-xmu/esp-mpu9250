@@ -14,9 +14,9 @@ uint8_t mpu9250_init() {
     vTaskDelay(100 / portTICK_RATE_MS);
     MPU_Write_Byte(MPU9250_PWR_MGMT_1, 0x00);
     // 设置量程
-    MPU_Set_Gyro_FSR(2); // 3
-    MPU_Set_Accel_FSR(2);
-    MPU_Set_Rate(50);
+    MPU_Set_Gyro_FSR(2);  // 1000dps
+    MPU_Set_Accel_FSR(2); // 8g
+    MPU_Set_Rate(100);    // 100Hz
 
     MPU_Write_Byte(MPU9250_INT_ENABLE, 0X00);  //关闭所有中断
     MPU_Write_Byte(MPU9250_USER_CTRL, 0X00);   // I2C主模式关闭
@@ -309,6 +309,9 @@ uint8_t MPU_Get_Gyroscope(int16_t *gx, int16_t *gy, int16_t *gz) {
         *gy = ((uint16_t)buf[2] << 8) | buf[3];
         *gz = ((uint16_t)buf[4] << 8) | buf[5];
     }
+    res = MPU_Read_Len(MPU_ADDR, MPU9250_GYRO_XOUT_H, 6, buf);
+
+
     return res;
 }
 

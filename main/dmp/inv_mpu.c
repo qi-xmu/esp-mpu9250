@@ -48,8 +48,8 @@
 #define i2c_read(a, b, c, d) MPU_Read_Len(a, b, c, d)
 #define delay_ms _delay_ms
 #define get_ms _get_ms
-#define log_i printf
-#define log_e printf
+#define log_i(fmt, arg...) ESP_LOGI("INV_MPU", fmt, ##arg)
+#define log_e(fmt, arg...) ESP_LOGE("INV_MPU", fmt, ##arg)
 #define min(a, b) ((a < b) ? a : b)
 
 static inline int reg_int_cb(struct int_param_s *int_param) { return 0; }
@@ -268,19 +268,19 @@ enum lpf_e {
 /* Full scale ranges. */
 enum gyro_fsr_e {
     INV_FSR_250DPS = 0,
-    INV_FSR_500DPS,
-    INV_FSR_1000DPS,
-    INV_FSR_2000DPS,
-    NUM_GYRO_FSR
+    INV_FSR_500DPS,  // 1
+    INV_FSR_1000DPS, // 2
+    INV_FSR_2000DPS, // 3
+    NUM_GYRO_FSR     // 4
 };
 
 /* Full scale ranges. */
 enum accel_fsr_e {
     INV_FSR_2G = 0,
-    INV_FSR_4G,
-    INV_FSR_8G,
-    INV_FSR_16G,
-    NUM_ACCEL_FSR
+    INV_FSR_4G,   // 1
+    INV_FSR_8G,   // 2
+    INV_FSR_16G,  // 3
+    NUM_ACCEL_FSR // 4
 };
 
 /* Clock sources. */
@@ -2300,24 +2300,34 @@ static int gyro_6500_self_test(long *bias_regular, long *bias_st, int debug) {
     return result;
 }
 
+/**
+ * @brief Get the st 6500 biases object
+ *
+ * @param gyro
+ * @param accel
+ * @param hw_test
+ * @param debug
+ * @return int
+ */
 static int get_st_6500_biases(long *gyro, long *accel, unsigned char hw_test,
                               int debug) {
-    unsigned char data[HWST_MAX_PACKET_LENGTH];
+    unsigned char data[HWST_MAX_PACKET_LENGTH]; // 512
     unsigned char packet_count, ii;
     unsigned short fifo_count;
     int s = 0, read_size = 0, ind;
 
     data[0] = 0x01;
     data[1] = 0;
-    if (i2c_write(st.hw->addr, st.reg->pwr_mgmt_1, 2, data))
+    if (i2c_write(st.hw->addr, st.reg->pwr_mgmt_1, 2,
+                  data)) // 自动选择最佳时钟源-否则使用外部振荡
         return -1;
     delay_ms(200);
     data[0] = 0;
-    if (i2c_write(st.hw->addr, st.reg->int_enable, 1, data))
+    if (i2c_write(st.hw->addr, st.reg->int_enable, 1, data)) // 重置中断使能
         return -1;
-    if (i2c_write(st.hw->addr, st.reg->fifo_en, 1, data))
+    if (i2c_write(st.hw->addr, st.reg->fifo_en, 1, data)) // fifo关闭
         return -1;
-    if (i2c_write(st.hw->addr, st.reg->pwr_mgmt_1, 1, data))
+    if (i2c_write(st.hw->addr, st.reg->pwr_mgmt_1, 1, data)) // 内部 20MHz 振荡
         return -1;
     if (i2c_write(st.hw->addr, st.reg->i2c_mst, 1, data))
         return -1;
@@ -2327,10 +2337,10 @@ static int get_st_6500_biases(long *gyro, long *accel, unsigned char hw_test,
     if (i2c_write(st.hw->addr, st.reg->user_ctrl, 1, data))
         return -1;
     delay_ms(15);
-    data[0] = st.test->reg_lpf;
+    data[0] = st.test->reg_lpf; // 2
     if (i2c_write(st.hw->addr, st.reg->lpf, 1, data))
         return -1;
-    data[0] = st.test->reg_rate_div;
+    data[0] = st.test->reg_rate_div; // 0
     if (i2c_write(st.hw->addr, st.reg->rate_div, 1, data))
         return -1;
     if (hw_test)
@@ -2365,17 +2375,18 @@ static int get_st_6500_biases(long *gyro, long *accel, unsigned char hw_test,
         log_i("Starting Bias Loop Reads\n");
 
     // start reading samples
-    while (s < test.packet_thresh) {
+    while (s < test.packet_thresh) {   // 0
         delay_ms(test.sample_wait_ms); // wait 10ms to fill FIFO
         if (i2c_read(st.hw->addr, st.reg->fifo_count_h, 2, data))
             return -1;
         fifo_count = (data[0] << 8) | data[1];
-        packet_count = fifo_count / MAX_PACKET_LENGTH;
-        if ((test.packet_thresh - s) < packet_count)
+        log_i("fifo_count %d", fifo_count);
+        packet_count = fifo_count / MAX_PACKET_LENGTH; // 12
+        if ((test.packet_thresh /* 200 */ - s) < packet_count)
             packet_count = test.packet_thresh - s;
         read_size = packet_count * MAX_PACKET_LENGTH;
 
-        // burst read from FIFO
+        // burst read from FIFO 读取队列的信息
         if (i2c_read(st.hw->addr, st.reg->fifo_r_w, read_size, data))
             return -1;
         ind = 0;
@@ -2398,8 +2409,11 @@ static int get_st_6500_biases(long *gyro, long *accel, unsigned char hw_test,
         s += packet_count;
     }
 
-    if (debug)
-        log_i("Samples: %d\n", s);
+    if (debug) {
+        log_i("Samples: %d", s);
+        log_i("Samples accel %d %d %d gyro %d %d %d", accel[0], accel[1],
+              accel[2], gyro[0], gyro[1], gyro[2]);
+    }
 
     // stop FIFO
     data[0] = 0;
@@ -2413,11 +2427,12 @@ static int get_st_6500_biases(long *gyro, long *accel, unsigned char hw_test,
     accel[1] = (long)(((long long)accel[1] << 16) / test.accel_sens / s);
     accel[2] = (long)(((long long)accel[2] << 16) / test.accel_sens / s);
     /* remove gravity from bias calculation */
-        if (accel[2] > 0L)
+    if (accel[2] > 0L)
         accel[2] -= 65536L;
     else
         accel[2] += 65536L;
 
+    // TODO check
     if (debug) {
         log_i("Accel offset data HWST bit=%d: %7.4f %7.4f %7.4f\r\n", hw_test,
               accel[0] / 65536.f, accel[1] / 65536.f, accel[2] / 65536.f);
@@ -2466,14 +2481,17 @@ int mpu_run_6500_self_test(long *gyro, long *accel, unsigned char debug) {
         dmp_was_on = 1;
     } else
         dmp_was_on = 0;
+    log_i("dmp_was_on %d", dmp_was_on);
 
     /* Get initial settings. */
-    mpu_get_gyro_fsr(&gyro_fsr);
+    mpu_get_gyro_fsr(&gyro_fsr); // full scale range
     mpu_get_accel_fsr(&accel_fsr);
-    mpu_get_lpf(&lpf);
-    mpu_get_sample_rate(&sample_rate);
+    mpu_get_lpf(&lpf);                 // lower power fliter frequency
+    mpu_get_sample_rate(&sample_rate); // sample rate
     sensors_on = st.chip_cfg.sensors;
-    mpu_get_fifo_config(&fifo_sensors);
+    mpu_get_fifo_config(&fifo_sensors); // 获取sensors配置
+    log_i("gyro_fsr: %d, accel_fsr: %d, lpf: %d, sample_rate: %d", gyro_fsr,
+          accel_fsr, lpf, sample_rate);
 
     if (debug)
         log_i("Retrieving Biases\r\n");
@@ -2584,7 +2602,7 @@ int mpu_run_self_test(long *gyro, long *accel) {
         dmp_was_on = 0;
 
     /* Get initial settings. */
-    mpu_get_gyro_fsr(&gyro_fsr);
+    mpu_get_gyro_fsr(&gyro_fsr); // full scale range
     mpu_get_accel_fsr(&accel_fsr);
     mpu_get_lpf(&lpf);
     mpu_get_sample_rate(&sample_rate);

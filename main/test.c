@@ -23,19 +23,24 @@ void test_time() {
     ESP_LOGD("TEST:time", "Timestamp is [%d] ", res);
 }
 
-void test_mpu() {
+int test_mpu() {
     int16_t ax, ay, az;
     int16_t gx, gy, gz;
-    for (int i = 0; i < 3; i++) {
+    if (mpu9250_init())
+        return -1;
+    for (int i = 0; i < 3000000; i++) {
         MPU_Get_Gyroscope(&gx, &gy, &gz);
         MPU_Get_Accelerometer(&ax, &ay, &az);
 
-        printf("ax, ay, az = %d %d %d\n", ax, ay, az);
-        printf("Gx, Gy, Gz = %d %d %d\n", gx, gy, gz);
+        printf("ax, ay, az = %7.4lfg %7.4lfg %7.4lfg\n", ax / (32768.0f / 8),
+               ay / (32768.0f / 8), az / (32768.0f / 8));
+        printf("Gx, Gy, Gz = %7.4lfd %7.4lfd %7.4lfd\n", gx / (32768.0f / 1000),
+               gy / (32768.0f / 1000), gz / (32768.0f / 1000));
 
         // uint8_t re = mpu_dmp_get_data(&pitch, &roll, &yaw);
         // printf("--- %d\n", re);
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
+    return 0;
 }

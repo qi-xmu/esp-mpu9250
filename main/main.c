@@ -25,14 +25,14 @@ void app_main(void) {
 
     // test_temp(); // 测试读取温度
     // test_time(); // 测试时间函数
-    // test_mpu(); // 测试mpu读取
+    test_mpu(); // 测试mpu读取
 
-    uint8_t re = mpu_dmp_get_data(&pitch, &roll, &yaw);
-    printf("--- %d\n", re);
+    // uint8_t re = mpu_dmp_get_data(&pitch, &roll, &yaw);
+    // printf("--- %d\n", re);
 
-    printf("pitch   = %f\n", pitch);
-    printf("roll    = %f\n", roll);
-    printf("yaw     = %f\n", yaw);
+    // printf("pitch   = %f\n", pitch);
+    // printf("roll    = %f\n", roll);
+    // printf("yaw     = %f\n", yaw);
 
     // while (1) {
     //     ESP_LOGW("STEP","%ld", step_count);

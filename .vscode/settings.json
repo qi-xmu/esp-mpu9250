@@ -22,7 +22,10 @@
     "esp_timer.h": "c",
     "time.h": "c",
     "inv_mpu.h": "c",
-    "inv_mpu_dmp_motion_driver.h": "c"
+    "inv_mpu_dmp_motion_driver.h": "c",
+    "array": "c",
+    "string": "c",
+    "string_view": "c"
   },
   "idf.flashType": "UART",
   "idf.port": "/dev/ttyACM0",
