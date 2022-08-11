@@ -1,4 +1,4 @@
-# ESP-IDF MPU950 Digital Motion Processer
+# ESP-IDF MPU9250 Digital Motion Processer
 
 [[English]](./README.md) 
 
